@@ -17,15 +17,15 @@ from webdriver_manager.chrome import ChromeDriverManager
 init(autoreset=True)
 
 # ================== CONFIG & AUTH ==================
-# আপনার GitHub Raw URL এখানে দিন যেখানে আপনি অনুমোদিত Key গুলো রাখবেন
-GITHUB_KEY_URL = "https://raw.githubusercontent.com/xmlcreator320-cpu/AKASH-FB/refs/heads/main/keys.txt"
+# আপনার GitHub Raw URL (সঠিক ইউজারনেম ও রিপোজিটরি নাম বসাবেন)
+GITHUB_KEY_URL = "https://raw.githubusercontent.com/xmlcreator320-cpu/AKASH-FB/main/keys.txt"
 
 stats = {"total": 0, "success": 0, "no_id": 0, "no_sms": 0, "error": 0}
 lock = Lock()
 log_count = 0
 HEADLESS = False
 
-# বাস্তবসম্মত ব্রাউজার লিস্ট (Randomly used for stealth)
+# বাস্তবসম্মত ব্রাউজার লিস্ট
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
     "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
@@ -33,31 +33,38 @@ USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
 ]
 
-# ================== LICENSE SYSTEM ==================
+# ================== LICENSE SYSTEM (FIXED) ==================
 def check_key():
+    # পার্মানেন্ট আইডি লজিক (এটি আর পরিবর্তন হবে না)
     hwid = str(uuid.getnode())
-    user_key = f"AKASH-{hwid[:6]}" # ইউজারের জন্য ইউনিক কি
+    user_key = f"AKASH-{hwid[-6:]}" 
+    
     os.system("cls" if os.name == "nt" else "clear")
     print(Fore.CYAN + "=" * 60)
     print(f"{Fore.WHITE} YOUR KEY : {Fore.YELLOW}{user_key}")
-    print(f"{Fore.WHITE} STATUS   : {Fore.RED}NOT ACTIVE")
-    print(Fore.CYAN + "=" * 60)
-    print(f"{Fore.GREEN} Message  : Contact Admin To Activate Key")
-    print(f"{Fore.GREEN} Telegram : @akash_bosss")
-    print(Fore.CYAN + "=" * 60)
     
     try:
-        # গিটহাব থেকে কি চেক করা
-        active_keys = requests.get(GITHUB_KEY_URL).text
+        # Cache Fix: লিঙ্কের সাথে টাইমস্ট্যাম্প যোগ করা হয়েছে যাতে ফ্রেশ ডাটা আসে
+        response = requests.get(f"{GITHUB_KEY_URL}?t={time.time()}", timeout=10)
+        active_keys = response.text
+        
         if user_key in active_keys:
+            print(f"{Fore.WHITE} STATUS   : {Fore.GREEN}ACTIVE")
+            print(Fore.CYAN + "=" * 60)
             print(f"{Fore.GREEN} [✓] KEY ACTIVATED SUCCESSFULLY!")
             time.sleep(2)
             return True
         else:
+            print(f"{Fore.WHITE} STATUS   : {Fore.RED}NOT ACTIVE")
+            print(Fore.CYAN + "=" * 60)
+            print(f"{Fore.GREEN} Message  : Contact Admin To Activate Key")
+            print(f"{Fore.GREEN} Telegram : @akash_bosss")
+            print(Fore.CYAN + "=" * 60)
             input(f"{Fore.YELLOW} Press Enter to Exit...")
             return False
     except:
         print(f"{Fore.RED} [!] Check your internet connection!")
+        time.sleep(3)
         return False
 
 # ================== BANNER ==================
@@ -89,7 +96,6 @@ def setup_chrome(proxy=None):
     if proxy:
         options.add_argument(f'--proxy-server={proxy}')
 
-    # PC vs Termux detection
     if os.name == "nt" or (os.name == "posix" and not os.path.exists("/data/data/com.termux")):
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     else:
@@ -103,7 +109,7 @@ def log_event(msg, color=Fore.WHITE):
         log_count += 1
         print(f"{color}[{log_count}] {msg}{Style.RESET_ALL}")
 
-# ================== PROCESS NUMBER (Original Logic) ==================
+# ================== PROCESS NUMBER ==================
 def process_number(any_number, proxy=None):
     driver = None
     try:
@@ -119,7 +125,6 @@ def process_number(any_number, proxy=None):
 
         page_text = driver.page_source
 
-        # Logic for "This is my account"
         if "This is my account" in page_text:
             try:
                 driver.find_element(By.XPATH, "//*[normalize-space(text())='This is my account']").click()
@@ -132,7 +137,6 @@ def process_number(any_number, proxy=None):
             with lock: stats["no_id"] += 1
         elif "Send code via SMS" in page_text or "Try another way" in page_text:
             try:
-                # SMS Trigger
                 sms_btn = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, "//input[contains(@value,'sms')]")))
                 driver.execute_script("arguments[0].click();", sms_btn)
                 driver.find_element(By.XPATH, "//button[contains(.,'Continue')]").click()
