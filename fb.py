@@ -18,7 +18,7 @@ init(autoreset=True)
 
 # ================== CONFIG & AUTH ==================
 # আপনার GitHub Raw URL এখানে দিন যেখানে আপনি অনুমোদিত Key গুলো রাখবেন
-GITHUB_KEY_URL = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/keys.txt"
+GITHUB_KEY_URL = "https://raw.githubusercontent.com/xmlcreator320-cpu/AKASH-FB/refs/heads/main/keys.txt"
 
 stats = {"total": 0, "success": 0, "no_id": 0, "no_sms": 0, "error": 0}
 lock = Lock()
