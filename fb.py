@@ -16,85 +16,63 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 init(autoreset=True)
 
-# ================== CONFIG & AUTH ==================
-# আপনার GitHub Raw URL নিশ্চিত করুন
+# ================== CONFIG & KEY SYSTEM ==================
 GITHUB_KEY_URL = "https://raw.githubusercontent.com/xmlcreator320-cpu/AKASH-FB/main/keys.txt"
 
 stats = {"total": 0, "success": 0, "no_id": 0, "no_sms": 0, "error": 0}
 lock = Lock()
 log_count = 0
-HEADLESS = False
+HEADLESS = True
+SELECTED_PROXY = None
 
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
-]
-
-# ================== PERMANENT KEY SYSTEM ==================
+# ================== PERMANENT KEY ==================
 def check_key():
-    # টার্মাক্স হোম ডিরেক্টরিতে কি (Key) সেভ করে রাখবে
-    key_storage = os.path.join(os.path.expanduser("~"), ".akash_id_permanent.txt")
-    
-    if os.path.exists(key_storage):
-        with open(key_storage, "r") as f:
-            user_key = f.read().strip()
+    key_file = os.path.join(os.path.expanduser("~"), ".ng_sport_key.txt")
+    if os.path.exists(key_file):
+        with open(key_file, "r") as f: user_key = f.read().strip()
     else:
-        # প্রথমবার রান করলে একটি ইউনিক আইডি তৈরি করবে যা আর বদলাবে না
-        hwid = str(uuid.uuid4().hex[:6]).upper()
-        user_key = f"AKASH-{hwid}"
-        with open(key_storage, "w") as f:
-            f.write(user_key)
+        user_key = f"NG-{uuid.uuid4().hex[:6].upper()}"
+        with open(key_file, "w") as f: f.write(user_key)
 
     os.system("clear")
     print(Fore.CYAN + "=" * 60)
     print(f"{Fore.WHITE} YOUR KEY : {Fore.YELLOW}{user_key}")
-    
     try:
-        # Fresh key check from GitHub
-        response = requests.get(f"{GITHUB_KEY_URL}?t={time.time()}", timeout=10)
-        active_keys = response.text
-        
+        active_keys = requests.get(f"{GITHUB_KEY_URL}?t={time.time()}", timeout=10).text
         if user_key in active_keys:
             print(f"{Fore.WHITE} STATUS   : {Fore.GREEN}ACTIVE")
-            print(Fore.CYAN + "=" * 60)
             return True
         else:
             print(f"{Fore.WHITE} STATUS   : {Fore.RED}NOT ACTIVE")
-            print(Fore.CYAN + "=" * 60)
-            print(f"{Fore.GREEN} Message  : Contact Admin To Activate Key")
-            print(f"{Fore.GREEN} Telegram : @akash_bosss")
-            input(f"{Fore.YELLOW} Press Enter to Exit...")
+            print(Fore.GREEN + " Contact Admin: @ng_sport_helpline")
+            input(" Press Enter to Exit...")
             return False
-    except:
-        print(f"{Fore.RED} [!] Check your internet connection!")
-        time.sleep(3)
-        return False
+    except: return True # Offline backup
 
 # ================== BANNER ==================
 def banner():
+    os.system("clear")
     print(Fore.RED + Style.BRIGHT + r"""
-  █████╗ ██╗  ██╗ █████╗ ███████╗██╗  ██╗
- ██╔══██╗██║ ██╔╝██╔══██╗██╔════╝██║  ██║
- ███████║█████╔╝ ███████║███████╗███████║
- ██╔══██║██╔═██╗ ██╔══██║╚════██║██╔══██║
- ██║  ██║██║  ██╗██║  ██║███████║██║  ██║
- ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+ ███╗   ██╗ ██████╗       ███████╗██████╗  ██████╗ ██████╗ ████████╗
+ ████╗  ██║██╔════╝       ██╔════╝██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝
+ ██╔██╗ ██║██║  ███╗      ███████╗██████╔╝██║   ██║██████╔╝   ██║
+ ██║╚██╗██║██║   ██║      ╚════██║██╔═══╝ ██║   ██║██╔══██╗   ██║
+ ██║ ╚████║╚██████╔╝      ███████║██║     ╚██████╔╝██║  ██║   ██║
+ ╚═╝  ╚═══╝ ╚═════╝       ╚══════╝╚═╝      ╚═════╝ ╚═╝  ╚═╝   ╚═╝
     """)
-    print(Fore.MAGENTA + Style.BRIGHT + "        >>> FB REST TOOLS v2.0 PHONE CLONE <<<")
+    print(Fore.MAGENTA + Style.BRIGHT + "        >>> FB REST TOOLS v1.0 PHONE CLONE <<<")
+    print(Fore.CYAN + "=" * 60)
+    print(Fore.YELLOW + " Developer : NG_SPORT | TELEGRAM : @ng_sport_helpline")
     print(Fore.CYAN + "=" * 60)
 
-# ================== CHROME SETUP ==================
-def setup_chrome(proxy=None):
+# ================== SELENIUM SETUP ==================
+def setup_chrome():
     options = Options()
-    if HEADLESS:
-        options.add_argument("--headless=new")
-    options.add_argument(f"user-agent={random.choice(USER_AGENTS)}")
+    if HEADLESS: options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    if proxy:
-        options.add_argument(f'--proxy-server={proxy}')
+    if SELECTED_PROXY:
+        options.add_argument(f'--proxy-server={SELECTED_PROXY}')
 
     if os.name == "nt" or (os.name == "posix" and not os.path.exists("/data/data/com.termux")):
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
@@ -109,76 +87,84 @@ def log_event(msg, color=Fore.WHITE):
         log_count += 1
         print(f"{color}[{log_count}] {msg}{Style.RESET_ALL}")
 
-# ================== PROCESS LOGIC ==================
-def process_number(any_number, proxy=None):
+# ================== CORE PROCESS (YOUR ORIGINAL LOGIC) ==================
+def process_number(any_number):
     driver = None
     try:
-        driver = setup_chrome(proxy)
+        driver = setup_chrome()
         driver.get("https://www.facebook.com/recover/initiate/")
-        input_field = WebDriverWait(driver, 10).until(
+
+        input_field = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Email address or mobile number']"))
         )
         input_field.send_keys(any_number)
         driver.find_element(By.XPATH, "//button[contains(text(),'Search')]").click()
         time.sleep(3)
-        
+
         page_text = driver.page_source
         if "No search results" in page_text:
             log_event(f"{any_number} : Invalid Account", Fore.RED)
             with lock: stats["no_id"] += 1
-        elif "Send code via SMS" in page_text or "Try another way" in page_text:
+        elif any(x in page_text for x in ["Send code via SMS", "Try another way", "This is my account"]):
             log_event(f"{any_number} : Success Found", Fore.GREEN)
             with lock: stats["success"] += 1
             with open("success_sent.txt", "a") as f: f.write(any_number + "\n")
         else:
             log_event(f"{any_number} : Unknown Result", Fore.YELLOW)
             with lock: stats["error"] += 1
+
     except:
         with lock: stats["error"] += 1
     finally:
         if driver: driver.quit()
 
+# ================== PROXY HANDLER ==================
+def get_proxy_choice():
+    global SELECTED_PROXY
+    choice = input(Fore.WHITE + " Use Proxy? (y/n): ").lower()
+    if choice == 'y':
+        print(Fore.YELLOW + " 1. Manual Entry\n 2. Use proxy.txt")
+        p_type = input(" Select: ")
+        if p_type == '1':
+            SELECTED_PROXY = input(" Enter Proxy (IP:PORT): ")
+        else:
+            if os.path.exists("proxy.txt"):
+                proxies = open("proxy.txt").read().splitlines()
+                SELECTED_PROXY = random.choice(proxies)
+                print(Fore.GREEN + f" [✓] Random Proxy Loaded: {SELECTED_PROXY}")
+            else:
+                print(Fore.RED + " proxy.txt not found!")
+
 # ================== MAIN ==================
 def main():
     if not check_key(): return
     banner()
-
-    # ফাইল খোঁজার সঠিক এবং অটোমেটিক সিস্টেম
-    paths_to_check = ["numbers.txt", "/sdcard/number.txt", "/sdcard/numbers.txt"]
-    numbers = []
     
-    for path in paths_to_check:
-        if os.path.exists(path):
-            try:
-                with open(path, "r", encoding="utf-8", errors="ignore") as f:
-                    numbers = [line.strip() for line in f if line.strip()]
-                if numbers:
-                    print(f"{Fore.GREEN} [✓] SUCCESSFULLY LOADED {len(numbers)} NUMBERS FROM: {path}")
-                    break
-            except: continue
+    file_path = "numbers.txt"
+    if not os.path.exists(file_path):
+        if os.path.exists("/sdcard/number.txt"): file_path = "/sdcard/number.txt"
+        else: print("File numbers.txt not found!"); return
 
-    if not numbers:
-        print(Fore.RED + " [!] ERROR: No numbers found! Please create 'number.txt' in SD Card.")
-        return
-
+    numbers = open(file_path, "r").read().splitlines()
+    numbers = [n.strip() for n in numbers if n.strip()]
     stats["total"] = len(numbers)
-    print(Fore.CYAN + "=" * 60)
+
+    get_proxy_choice()
     
     try:
-        threads = int(input(Fore.WHITE + " Enter Threads (1-15): "))
-    except: threads = 3
+        threads = int(input(Fore.WHITE + " Enter Threads (1-30): "))
+    except: threads = 5
 
     global HEADLESS
     HEADLESS = input(" Headless Mode? (y/n): ").lower() == 'y'
-    
-    print(Fore.CYAN + "\n Starting Process...\n")
+
+    print(Fore.CYAN + f"\n Starting with {threads} threads...\n")
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
         for num in numbers:
-            executor.submit(process_number, num, None)
+            executor.submit(process_number, num)
 
-    print(Fore.CYAN + "\n" + "="*60)
-    print(Fore.GREEN + f" PROCESS COMPLETED. TOTAL SUCCESS: {stats['success']}")
+    print(Fore.GREEN + f"\n PROCESS COMPLETED. SUCCESS: {stats['success']}")
     input(" Press Enter to Exit...")
 
 if __name__ == "__main__":
