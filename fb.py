@@ -17,7 +17,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 init(autoreset=True)
 
 # ================== CONFIG & AUTH ==================
-# আপনার GitHub Raw URL (সঠিক ইউজারনেম ও রিপোজিটরি নাম বসাবেন)
+# আপনার GitHub Raw URL নিশ্চিত করুন
 GITHUB_KEY_URL = "https://raw.githubusercontent.com/xmlcreator320-cpu/AKASH-FB/main/keys.txt"
 
 stats = {"total": 0, "success": 0, "no_id": 0, "no_sms": 0, "error": 0}
@@ -25,7 +25,6 @@ lock = Lock()
 log_count = 0
 HEADLESS = False
 
-# বাস্তবসম্মত ব্রাউজার লিস্ট
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
     "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
@@ -33,18 +32,27 @@ USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
 ]
 
-# ================== LICENSE SYSTEM (FIXED) ==================
+# ================== LICENSE SYSTEM (PERMANENT KEY FIX) ==================
 def check_key():
-    # পার্মানেন্ট আইডি লজিক (এটি আর পরিবর্তন হবে না)
-    hwid = str(uuid.getnode())
-    user_key = f"AKASH-{hwid[-6:]}" 
+    # এই ফাইলটি ইউজারের ফোনে কি (Key) সেভ করে রাখবে যাতে পরিবর্তন না হয়
+    key_storage = os.path.join(os.path.expanduser("~"), ".akash_key.txt")
     
+    if os.path.exists(key_storage):
+        with open(key_storage, "r") as f:
+            user_key = f.read().strip()
+    else:
+        # প্রথমবার রান করলে একটি ইউনিক আইডি তৈরি করবে
+        hwid = str(uuid.uuid4().hex[:6]).upper()
+        user_key = f"AKASH-{hwid}"
+        with open(key_storage, "w") as f:
+            f.write(user_key)
+
     os.system("cls" if os.name == "nt" else "clear")
     print(Fore.CYAN + "=" * 60)
     print(f"{Fore.WHITE} YOUR KEY : {Fore.YELLOW}{user_key}")
     
     try:
-        # Cache Fix: লিঙ্কের সাথে টাইমস্ট্যাম্প যোগ করা হয়েছে যাতে ফ্রেশ ডাটা আসে
+        # ক্যাশে সমস্যা সমাধানের জন্য টাইমস্ট্যাম্প ব্যবহার
         response = requests.get(f"{GITHUB_KEY_URL}?t={time.time()}", timeout=10)
         active_keys = response.text
         
